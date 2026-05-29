@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="株式ラジオ">
+<title>株式マーケットラジオ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c28;
+  --border: rgba(255,255,255,0.07);
+  --accent: #e8c96d;
+  --accent2: #c4a84a;
+  --text: #f0ede8;
+  --text2: #8a8a9a;
+  --text3: #4a4a5a;
+  --red: #e05555;
+  --green: #4caf7d;
+  --radius: 16px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; overflow: hidden; }
+
+/* SCREENS */
+.screen { display: none; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ── SETUP SCREEN ── */
+#setupScreen { justify-content: center; align-items: center; padding: 32px 24px; background: var(--bg); }
+.setup-inner { width: 100%; max-width: 360px; }
+.logo-mark { font-size: 48px; margin-bottom: 12px; text-align: center; }
+.setup-title { font-size: 22px; font-weight: 700; text-align: center; letter-spacing: -0.5px; margin-bottom: 4px; }
+.setup-sub { font-size: 13px; color: var(--text2); text-align: center; margin-bottom: 36px; }
+.field-label { font-size: 12px; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.api-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
+  -webkit-appearance: none; margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+.api-input:focus { border-color: var(--accent); }
+.api-hint { font-size: 11px; color: var(--text3); margin-bottom: 28px; line-height: 1.6; }
+.api-hint a { color: var(--accent); text-decoration: none; }
+.btn-primary {
+  width: 100%; padding: 16px; background: var(--accent);
+  color: #0a0a0f; font-size: 15px; font-weight: 700;
+  border: none; border-radius: 12px; cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em;
+}
+.btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+/* ── MAIN SCREEN ── */
+#mainScreen { background: var(--bg); }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 56px 20px 16px;
+  background: linear-gradient(180deg, var(--bg) 60%, transparent);
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+.settings-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+
+/* HERO */
+.hero {
+  flex-shrink: 0; padding: 0 20px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.date-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace;
+  align-self: flex-start; margin-bottom: 8px;
+}
+.date-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.hero h1 { font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -0.5px; }
+.hero h1 span { color: var(--accent); }
+
+/* STATUS BAR */
+.status-bar {
+  margin: 0 20px 16px; padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.status-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
+.status-indicator.generating { background: var(--accent); animation: blink 1s infinite; }
+.status-indicator.ready { background: var(--green); }
+.status-indicator.playing { background: var(--green); animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.status-text { font-size: 13px; color: var(--text2); flex: 1; }
+.status-cost { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+/* GENERATE BUTTON */
+.generate-wrap { padding: 0 20px 20px; flex-shrink: 0; }
+.btn-generate {
+  width: 100%; padding: 18px; border-radius: 14px;
+  background: var(--accent); color: #0a0a0f;
+  font-size: 16px; font-weight: 700; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: opacity 0.2s, transform 0.15s; letter-spacing: 0.02em;
+}
+.btn-generate:active { opacity: 0.85; transform: scale(0.98); }
+.btn-generate:disabled { background: var(--surface2); color: var(--text3); pointer-events: none; }
+.btn-generate .icon { font-size: 20px; }
+
+/* PLAYER */
+.player {
+  margin: 0 20px 16px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); flex-shrink: 0;
+  display: none;
+}
+.player.visible { display: block; }
+.player-now { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+.player-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progress-track { height: 3px; background: var(--surface2); border-radius: 2px; margin-bottom: 8px; cursor: pointer; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; transition: width 0.5s linear; }
+.progress-times { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 16px; }
+.player-controls { display: flex; align-items: center; gap: 12px; }
+.ctrl-btn {
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface2); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer; transition: background 0.15s, transform 0.1s; flex-shrink: 0;
+}
+.ctrl-btn:active { transform: scale(0.92); }
+.ctrl-btn.play-main { width: 48px; height: 48px; background: var(--accent); font-size: 22px; border: none; }
+.ctrl-btn.play-main:active { opacity: 0.85; }
+.speed-group { display: flex; gap: 6px; margin-left: auto; }
+.speed-btn {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text2); font-size: 12px;
+  font-family: 'DM Mono', monospace; cursor: pointer; transition: all 0.15s;
+}
+.speed-btn.active { background: var(--accent); color: #0a0a0f; border-color: var(--accent); font-weight: 700; }
+
+/* CHAPTERS */
+.chapters-wrap { flex: 1; overflow-y: auto; padding: 0 20px; -webkit-overflow-scrolling: touch; }
+.chapters-wrap::-webkit-scrollbar { display: none; }
+.section-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 12px; }
+.chapter-list { display: flex; flex-direction: column; gap: 8px; }
+.chapter-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.chapter-item.active { border-color: var(--accent); background: rgba(232,201,109,0.06); }
+.chapter-item.done { opacity: 0.5; }
+.chapter-num {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--surface2); display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  font-family: 'DM Mono', monospace; flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+.chapter-item.active .chapter-num { background: var(--accent); color: #0a0a0f; }
+.chapter-info { flex: 1; min-width: 0; }
+.chapter-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.chapter-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.chapter-dur { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+
+/* SCRIPT VIEWER */
+.script-wrap {
+  display: none; flex-direction: column; height: 100vh; height: 100dvh;
+  background: var(--bg);
+}
+.script-wrap.active { display: flex; }
+.script-header {
+  padding: 56px 20px 16px; display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.back-btn {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--surface);
+  border: 1px solid var(--border); display: flex; align-items: center;
+  justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0;
+}
+.script-header-title { font-size: 15px; font-weight: 500; flex: 1; }
+.script-body { flex: 1; overflow-y: auto; padding: 0 20px 40px; -webkit-overflow-scrolling: touch; }
+.script-body::-webkit-scrollbar { display: none; }
+.script-text { font-size: 16px; line-height: 2; color: var(--text); white-space: pre-wrap; word-break: break-all; }
+
+/* BOTTOM SPACER */
+.bottom-spacer { height: calc(20px + var(--safe-bottom)); flex-shrink: 0; }
+
+/* GENERATING OVERLAY */
+.gen-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,10,15,0.92); backdrop-filter: blur(8px);
+  z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px;
+}
+.gen-overlay.visible { display: flex; }
+.gen-spinner { font-size: 48px; animation: spin 2s linear infinite; margin-bottom: 24px; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.gen-label { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.gen-sub { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.7; }
+.gen-progress { width: 200px; height: 2px; background: var(--surface2); border-radius: 1px; margin-top: 28px; overflow: hidden; }
+.gen-progress-bar { height: 100%; background: var(--accent); border-radius: 1px; animation: progress 8s ease-out forwards; }
+@keyframes progress { from{width:0%} to{width:90%} }
+
+/* SETTINGS PANEL */
+.settings-panel {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,10,15,0.85); backdrop-filter: blur(12px);
+  align-items: flex-end;
+}
+.settings-panel.visible { display: flex; }
+.settings-sheet {
+  width: 100%; background: var(--surface); border-radius: 24px 24px 0 0;
+  padding: 20px 24px calc(24px + var(--safe-bottom));
+}
+.settings-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+.settings-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label { font-size: 14px; color: var(--text); }
+.settings-row-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.settings-api-field { width: 100%; margin-top: 16px; }
+.close-settings { width: 100%; padding: 14px; background: var(--surface2); border: none; border-radius: 12px; color: var(--text2); font-size: 14px; cursor: pointer; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen" class="screen active">
+  <div class="setup-inner">
+    <div class="logo-mark">📻</div>
+    <h1 class="setup-title">株式マーケットラジオ</h1>
+    <p class="setup-sub">APIキーを設定して始めましょう</p>
+    <p class="field-label">Claude APIキー</p>
+    <input class="api-input" type="password" id="setupApiKey" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <p class="api-hint">
+      APIキーは <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> で取得できます。<br>
+      キーはこのデバイス内にのみ保存され、外部には送信されません。1回の原稿生成は約3〜5円です。
+    </p>
+    <button class="btn-primary" onclick="saveApiKey()">設定して始める</button>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="mainScreen" class="screen">
+  <div class="topbar">
+    <span class="topbar-title">📻 Market Radio</span>
+    <div class="settings-btn" onclick="openSettings()">⚙️</div>
+  </div>
+
+  <div class="hero">
+    <div class="date-badge">
+      <div class="dot"></div>
+      <span id="todayDate">2026年5月30日（土）</span>
+    </div>
+    <h1>今日の<br><span>株式ラジオ</span>を<br>聴こう</h1>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-indicator" id="statusDot"></div>
+    <span class="status-text" id="statusText">原稿を生成して放送を開始してください</span>
+    <span class="status-cost" id="statusCost"></span>
+  </div>
+
+  <div class="generate-wrap">
+    <button class="btn-generate" id="generateBtn" onclick="generateScript()">
+      <span class="icon">🎙</span>
+      今日の原稿を生成する
+    </button>
+  </div>
+
+  <div class="player" id="player">
+    <div class="player-now">NOW PLAYING</div>
+    <div class="player-title" id="playerTitle">—</div>
+    <div class="progress-track" onclick="seekTo(event)">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-times">
+      <span id="timeElapsed">0:00</span>
+      <span id="timeDuration">—</span>
+    </div>
+    <div class="player-controls">
+      <div class="ctrl-btn" onclick="prevChapter()">⏮</div>
+      <div class="ctrl-btn play-main" id="playBtn" onclick="togglePlay()">▶</div>
+      <div class="ctrl-btn" onclick="nextChapter()">⏭</div>
+      <div class="speed-group">
+        <div class="speed-btn" onclick="setSpeed(1.3)">1.3x</div>
+        <div class="speed-btn active" onclick="setSpeed(1.5)">1.5x</div>
+        <div class="speed-btn" onclick="setSpeed(1.8)">1.8x</div>
+        <div class="speed-btn" onclick="setSpeed(2.0)">2.0x</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chapters-wrap">
+    <p class="section-label">チャプター</p>
+    <div class="chapter-list" id="chapterList">
+      <div class="chapter-item" onclick="selectChapter(0)">
+        <div class="chapter-num">1</div>
+        <div class="chapter-info">
+          <div class="chapter-name">マーケット概況</div>
+          <div class="chapter-meta">日本株・米国株・為替の三本柱</div>
+        </div>
+        <div class="chapter-dur">約15分</div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(1)">
+        <div class="chapter-num">2</div>
+        <div class="chapter-info">
+          <div class="chapter-name">日本株 詳細レポート</div>
+          <div class="chapter-meta">日経・TOPIX・注目銘柄</div>
+        </div>
+        <div class="chapter-dur">約20分</div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(2)">
+        <div class="chapter-num">3</div>
+        <div class="chapter-info">
+          <div class="chapter-name">米国株・グローバル動向</div>
+          <div class="chapter-meta">ダウ・S&amp;P・ナスダック・FRB</div>
+        </div>
+        <div class="chapter-dur">約20分</div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(3)">
+        <div class="chapter-num">4</div>
+        <div class="chapter-info">
+          <div class="chapter-name">為替・商品市場</div>
+          <div class="chapter-meta">ドル円・原油・金価格</div>
+        </div>
+        <div class="chapter-dur">約15分</div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(4)">
+        <div class="chapter-num">5</div>
+        <div class="chapter-info">
+          <div class="chapter-name">経済指標・今後の注目点</div>
+          <div class="chapter-meta">重要指標・来週のイベント</div>
+        </div>
+        <div class="chapter-dur">約15分</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-spacer"></div>
+</div>
+
+<!-- SCRIPT VIEWER -->
+<div id="scriptScreen" class="screen">
+  <div class="script-header">
+    <div class="back-btn" onclick="closeScript()">←</div>
+    <div class="script-header-title" id="scriptTitle">原稿</div>
+  </div>
+  <div class="script-body">
+    <div class="script-text" id="scriptText"></div>
+  </div>
+  <div class="bottom-spacer"></div>
+</div>
+
+<!-- GENERATING OVERLAY -->
+<div class="gen-overlay" id="genOverlay">
+  <div class="gen-spinner">📡</div>
+  <div class="gen-label">原稿を生成中です</div>
+  <div class="gen-sub">最新の株式・経済情報を収集して<br>ラジオ原稿を作成しています<br>しばらくお待ちください</div>
+  <div class="gen-progress"><div class="gen-progress-bar"></div></div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settingsPanel" onclick="closeSettingsOutside(event)">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+    <div class="settings-title">設定</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">APIキー</div>
+        <div class="settings-row-sub">Anthropic console で取得</div>
+      </div>
+    </div>
+    <div class="settings-api-field">
+      <input class="api-input" type="password" id="settingsApiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">音声</div>
+        <div class="settings-row-sub">デバイスの日本語音声を使用</div>
+      </div>
+      <span style="font-size:13px;color:var(--text2)" id="voiceName">—</span>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">バージョン</div>
+      </div>
+      <span style="font-size:13px;color:var(--text2)">1.0.0</span>
+    </div>
+    <button class="btn-primary" style="margin-top:16px" onclick="saveSettingsKey()">APIキーを保存</button>
+    <button class="close-settings" onclick="closeSettings()">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let apiKey = '';
+let scripts = ['','','','',''];
+let chapters = [
+  { title:'CHAPTER 1：マーケット概況', dur: 15*60 },
+  { title:'CHAPTER 2：日本株 詳細レポート', dur: 20*60 },
+  { title:'CHAPTER 3：米国株・グローバル動向', dur: 20*60 },
+  { title:'CHAPTER 4：為替・商品市場', dur: 15*60 },
+  { title:'CHAPTER 5：経済指標・今後の注目点', dur: 15*60 },
+];
+let currentChapter = 0;
+let isPlaying = false;
+let speed = 1.5;
+let elapsed = 0;
+let timer = null;
+let utterances = [];
+let synth = window.speechSynthesis;
+let jpVoice = null;
+
+// ── INIT ──
+window.onload = () => {
+  const saved = localStorage.getItem('stock_radio_api_key');
+  if (saved) { apiKey = saved; showScreen('mainScreen'); }
+  updateDate();
+  loadVoices();
+  synth.onvoiceschanged = loadVoices;
+};
+
+function loadVoices() {
+  const voices = synth.getVoices();
+  jpVoice = voices.find(v => v.lang === 'ja-JP' && v.localService) ||
+            voices.find(v => v.lang === 'ja-JP') ||
+            voices.find(v => v.lang.startsWith('ja')) || null;
+  if (jpVoice) {
+    document.getElementById('voiceName').textContent = jpVoice.name.split(' ')[0];
+  }
+}
+
+function updateDate() {
+  const d = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('todayDate').textContent =
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+}
+
+// ── SCREENS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── SETUP ──
+function saveApiKey() {
+  const k = document.getElementById('setupApiKey').value.trim();
+  if (!k.startsWith('sk-ant-')) {
+    alert('APIキーは sk-ant- で始まる文字列です。Anthropic Consoleで確認してください。');
+    return;
+  }
+  apiKey = k;
+  localStorage.setItem('stock_radio_api_key', k);
+  showScreen('mainScreen');
+}
+
+// ── SETTINGS ──
+function openSettings() {
+  document.getElementById('settingsApiKey').value = apiKey;
+  document.getElementById('settingsPanel').classList.add('visible');
+}
+function closeSettings() {
+  document.getElementById('settingsPanel').classList.remove('visible');
+}
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settingsPanel')) closeSettings();
+}
+function saveSettingsKey() {
+  const k = document.getElementById('settingsApiKey').value.trim();
+  if (!k.startsWith('sk-ant-')) { alert('APIキーの形式が正しくありません。'); return; }
+  apiKey = k;
+  localStorage.setItem('stock_radio_api_key', k);
+  closeSettings();
+  setStatus('APIキーを更新しました', 'ready');
+}
+
+// ── STATUS ──
+function setStatus(text, state) {
+  document.getElementById('statusText').textContent = text;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-indicator';
+  if (state) dot.classList.add(state);
+}
+
+// ── GENERATE ──
+async function generateScript() {
+  if (!apiKey) { openSettings(); return; }
+  synth.cancel();
+  isPlaying = false;
+  clearInterval(timer);
+  scripts = ['','','','',''];
+
+  document.getElementById('genOverlay').classList.add('visible');
+  document.getElementById('generateBtn').disabled = true;
+  setStatus('原稿を生成中...', 'generating');
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+
+  const prompt = `あなたはプロの株式アナリスト兼ラジオパーソナリティです。
+本日${dateStr}の最新の株式・経済情報をもとに、耳で聴いてわかる自然な口語体のラジオ原稿を作成してください。
+
+以下の5チャプター構成で、合計約18,000〜36,000文字の原稿を書いてください。
+
+各チャプターの冒頭は必ず「📻 CHAPTER数字：タイトル（推定○分）」で始めてください。
+
+■ CHAPTER 1：マーケット概況（日本株・米国株・為替）約15分
+- 日経平均・TOPIX・NYダウ・S&P500・ナスダック・ドル円の概況
+- 市場全体の流れと背景
+
+■ CHAPTER 2：日本株 詳細レポート 約20分
+- 日経・TOPIXの詳細な動き
+- 注目セクター・テーマ
+- 個別銘柄ニュース3〜5銘柄
+
+■ CHAPTER 3：米国株・グローバル動向 約20分
+- NYダウ・S&P500・ナスダックの詳細
+- 注目の米国企業・決算
+- FRB・金融政策
+
+■ CHAPTER 4：為替・商品市場 約15分
+- ドル円・主要通貨
+- WTI原油・金価格
+- 日本経済への影響
+
+■ CHAPTER 5：経済指標・今後の注目点 約15分
+- 直近の重要指標
+- 来週の注目イベント
+- 投資家へのまとめ3点
+
+原稿のルール：
+- 聴いてわかる口語体（です・ます調）
+- 数字は読みやすく（例：38500円→3万8500円）
+- 専門用語は直後に簡単な説明を添える
+- （間）を適度に挿入する
+- 投資推奨は行わない、情報提供のみ`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const fullText = data.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n');
+
+    // チャプター分割
+    const chapterRegex = /📻\s*CHAPTER\s*(\d)/gi;
+    const parts = fullText.split(chapterRegex);
+    // parts: [前文, "1", ch1テキスト, "2", ch2テキスト, ...]
+    for (let i = 1; i < parts.length; i += 2) {
+      const idx = parseInt(parts[i]) - 1;
+      if (idx >= 0 && idx < 5) {
+        scripts[idx] = '📻 CHAPTER' + parts[i] + (parts[i+1] || '');
+      }
+    }
+    if (scripts.every(s => !s)) scripts[0] = fullText;
+
+    // 入力トークン概算コスト表示
+    const inputTokens = data.usage?.input_tokens || 0;
+    const outputTokens = data.usage?.output_tokens || 0;
+    const cost = Math.round((inputTokens * 0.003 + outputTokens * 0.015) / 1000 * 150);
+    document.getElementById('statusCost').textContent = `約${cost}円`;
+
+    document.getElementById('genOverlay').classList.remove('visible');
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('player').classList.add('visible');
+    setStatus('原稿の生成が完了しました', 'ready');
+
+    // 自動でCHAPTER 1から再生開始
+    selectAndPlay(0);
+
+  } catch(e) {
+    document.getElementById('genOverlay').classList.remove('visible');
+    document.getElementById('generateBtn').disabled = false;
+    setStatus('エラーが発生しました: ' + e.message, '');
+    alert('原稿の生成に失敗しました。\n\n' + e.message + '\n\nAPIキーを確認してください。');
+  }
+}
+
+// ── PLAYER ──
+function selectChapter(idx) {
+  if (!scripts[idx]) return;
+  currentChapter = idx;
+  elapsed = 0;
+  updateChapterUI();
+  updatePlayerUI();
+}
+
+function selectAndPlay(idx) {
+  selectChapter(idx);
+  startSpeech();
+}
+
+function updateChapterUI() {
+  document.querySelectorAll('.chapter-item').forEach((el, i) => {
+    el.classList.toggle('active', i === currentChapter);
+  });
+}
+
+function updatePlayerUI() {
+  const ch = chapters[currentChapter];
+  document.getElementById('playerTitle').textContent = ch.title;
+  document.getElementById('timeDuration').textContent = formatTime(ch.dur);
+  document.getElementById('timeElapsed').textContent = formatTime(elapsed);
+  document.getElementById('progressFill').style.width =
+    Math.min(100, (elapsed / ch.dur) * 100) + '%';
+}
+
+function togglePlay() {
+  if (isPlaying) { pauseSpeech(); } else { startSpeech(); }
+}
+
+function startSpeech() {
+  if (!scripts[currentChapter]) {
+    setStatus('原稿を生成してください', '');
+    return;
+  }
+  synth.cancel();
+  isPlaying = true;
+  document.getElementById('playBtn').textContent = '⏸';
+  setStatus('放送中 — ' + chapters[currentChapter].title, 'playing');
+
+  const text = scripts[currentChapter];
+  // 長文を分割（SpeechSynthesisは長すぎると止まるiOS対策）
+  const chunks = splitText(text, 200);
+  let chunkIdx = 0;
+
+  function speakNext() {
+    if (!isPlaying || chunkIdx >= chunks.length) {
+      if (chunkIdx >= chunks.length) onChapterEnd();
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(chunks[chunkIdx]);
+    u.lang = 'ja-JP';
+    u.rate = speed;
+    if (jpVoice) u.voice = jpVoice;
+    u.onend = () => { chunkIdx++; speakNext(); };
+    u.onerror = (e) => { if (e.error !== 'interrupted') console.warn(e); };
+    synth.speak(u);
+    chunkIdx++;
+  }
+
+  // タイマー開始
+  clearInterval(timer);
+  timer = setInterval(() => {
+    elapsed = Math.min(elapsed + 1, chapters[currentChapter].dur);
+    updatePlayerUI();
+  }, 1000 / speed);
+
+  speakNext();
+}
+
+function pauseSpeech() {
+  isPlaying = false;
+  clearInterval(timer);
+  synth.cancel();
+  document.getElementById('playBtn').textContent = '▶';
+  setStatus('一時停止中', 'ready');
+}
+
+function onChapterEnd() {
+  clearInterval(timer);
+  isPlaying = false;
+  document.getElementById('playBtn').textContent = '▶';
+  if (currentChapter < 4 && scripts[currentChapter + 1]) {
+    setTimeout(() => selectAndPlay(currentChapter + 1), 1500);
+  } else {
+    setStatus('放送終了', 'ready');
+  }
+}
+
+function prevChapter() {
+  if (currentChapter > 0 && scripts[currentChapter - 1]) {
+    synth.cancel(); clearInterval(timer); isPlaying = false;
+    selectAndPlay(currentChapter - 1);
+  }
+}
+
+function nextChapter() {
+  if (currentChapter < 4 && scripts[currentChapter + 1]) {
+    synth.cancel(); clearInterval(timer); isPlaying = false;
+    selectAndPlay(currentChapter + 1);
+  }
+}
+
+function setSpeed(s) {
+  speed = s;
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', parseFloat(btn.textContent) === s);
+  });
+  if (isPlaying) { pauseSpeech(); startSpeech(); }
+}
+
+function seekTo(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  elapsed = Math.floor(ratio * chapters[currentChapter].dur);
+  updatePlayerUI();
+}
+
+function splitText(text, maxLen) {
+  const chunks = [];
+  // 句読点で区切る
+  const sentences = text.split(/(?<=[。、！？\n])/);
+  let buf = '';
+  for (const s of sentences) {
+    if ((buf + s).length > maxLen) {
+      if (buf) chunks.push(buf);
+      buf = s;
+    } else {
+      buf += s;
+    }
+  }
+  if (buf) chunks.push(buf);
+  return chunks.filter(c => c.trim());
+}
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = String(Math.floor(secs % 60)).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+// ── SCRIPT VIEWER ──
+function openScript(idx) {
+  document.getElementById('scriptTitle').textContent = chapters[idx].title;
+  document.getElementById('scriptText').textContent = scripts[idx] || '（未生成）';
+  showScreen('scriptScreen');
+}
+
+function closeScript() {
+  showScreen('mainScreen');
+}
+
+// iOS バックグラウンド対策
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && isPlaying) {
+    // バックグラウンドでも再生を維持するためのkeepAlive
+    synth.pause();
+    setTimeout(() => { if (isPlaying) synth.resume(); }, 100);
+  }
+});
+</script>
+</body>
+</html>

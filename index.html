@@ -10,28 +10,27 @@
 
     <div class="max-w-md mx-auto mt-20">
         <h1 class="text-2xl font-bold mb-6">株式ラジオ</h1>
-        
-        <button id="generate-btn" class="w-full bg-yellow-400 text-black p-4 rounded-xl font-bold mb-6">
-            今日の原稿を生成する
-        </button>
-
+        <button id="generate-btn" class="w-full bg-yellow-400 text-black p-4 rounded-xl font-bold mb-6">今日の原稿を生成する</button>
         <div id="status" class="bg-gray-800 p-4 rounded-xl hidden"></div>
     </div>
 
     <script>
-        // 設定処理
         document.getElementById('settings-btn').onclick = () => {
-            const key = prompt("API Key:");
-            const url = prompt("Worker URL:");
-            if(key) localStorage.setItem('api_key', key);
-            if(url) localStorage.setItem('worker_url', url);
+            const key = prompt("API Keyを入力:");
+            if (key !== null) {
+                const url = prompt("Worker URLを入力:");
+                if (url !== null) {
+                    localStorage.setItem('api_key', key);
+                    localStorage.setItem('worker_url', url);
+                    alert("保存しました");
+                }
+            }
         };
 
-        // 生成処理
         document.getElementById('generate-btn').onclick = async () => {
             const url = localStorage.getItem('worker_url');
             const statusDiv = document.getElementById('status');
-            if(!url) return alert("設定ボタンからURLを入れてください");
+            if(!url) return alert("設定から情報を入力してください");
 
             statusDiv.classList.remove('hidden');
             statusDiv.innerText = "生成中...";
@@ -41,11 +40,13 @@
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
+                        // モデル名はWorker側で強制上書きするため、ここでは何でもOK
                         model: 'claude-sonnet-4-6',
                         max_tokens: 4096,
                         messages: [{role: "user", content: "今日の株式マーケットラジオの原稿を作成してください。"}]
                     })
                 });
+                
                 const data = await res.json();
                 if(!res.ok) throw new Error(data.error?.message || "通信失敗");
                 statusDiv.innerText = "生成完了！";

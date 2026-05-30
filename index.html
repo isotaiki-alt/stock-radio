@@ -604,6 +604,14 @@ function selectChapter(idx) {
   elapsed = 0;
   updateChapterUI();
   updatePlayerUI();
+  
+  // 【追加】タップしたらすぐにその原稿を画面に表示する
+  openScript(idx);
+  
+  // 【追加】もし停止中だったら自動で音声をスタートさせる
+  if (!isPlaying) {
+    startSpeech();
+  }
 }
 
 function selectAndPlay(idx) {

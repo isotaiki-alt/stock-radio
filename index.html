@@ -41,7 +41,7 @@
                 <div id="current-date" class="text-xs bg-gray-800 text-gray-400 inline-block px-2 py-1 rounded-full mb-3"></div>
                 <h1 class="text-3xl font-extrabold tracking-tight">今日の<br><span class="text-amber-400">株式ラジオ</span>を<br>聴こう</h1>
             </div>
-            <button id="open-settings-btn" class="p-2 text-gray-400 hover:text-white bg-gray-800/80 rounded-xl border border-gray-700/50 active:scale-95 transition">
+            <button id="open-settings-btn" class="p-2 text-gray-400 hover:text-white bg-gray-800/80 rounded-xl border border-gray-700/50 active:scale-95 transition z-10">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -80,26 +80,26 @@
 
     </main>
 
-    <div id="settings-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-white flex items-center gap-2">⚙️ 接続・API設定</h2>
-                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-sm">閉じる</button>
+                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-sm px-2 py-1 bg-gray-800 rounded-lg">閉じる</button>
             </div>
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">CLOUDFLARE WORKER URL</label>
-                    <input id="settings-worker-url" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+                    <input id="settings-worker-url" type="text" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">ANTHROPIC API KEY (Workerに直接埋め込んでいない場合に使用)</label>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">ANTHROPIC API KEY (Worker側に直接埋めている場合は空欄でOK)</label>
                     <input id="settings-api-key" type="password" placeholder="sk-ant-..." class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">使用モデル名</label>
-                    <input id="settings-model-name" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+                    <input id="settings-model-name" type="text" placeholder="claude-sonnet-4-6" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
-                <button id="save-settings-btn" class="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition active:scale-95">
+                <button id="save-settings-btn" class="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition active:scale-95 shadow-md">
                     設定を保存する
                 </button>
             </div>
@@ -148,13 +148,76 @@
     </footer>
 
     <script>
-        // --- 1. 設定情報の初期化 (LocalStorageから読み込み or デフォルト値) ---
-        // 成功実績のある 'claude-sonnet-4-6' をデフォルト値に設定
-        let workerUrl = localStorage.getItem('worker_url') || 'https://stock-radio-api.isotaiki.workers.dev';
+        // --- 1. DOM要素の取得（競合を防ぐため最上部で宣言） ---
+        const openSettingsBtn = document.getElementById('open-settings-btn');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const inputWorkerUrl = document.getElementById('settings-worker-url');
+        const inputApiKey = document.getElementById('settings-api-key');
+        const inputModelName = document.getElementById('settings-model-name');
+
+        const generateBtn = document.getElementById('generate-btn');
+        const statusCard = document.getElementById('status-card');
+        const statusText = document.getElementById('status-text');
+        const progressBar = document.getElementById('progress-bar');
+        const costDisplay = document.getElementById('cost-display');
+        const chapterListContainer = document.getElementById('chapter-list');
+        const playerTitle = document.getElementById('player-title');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const speedSelect = document.getElementById('speed-select');
+        const seekSlider = document.getElementById('seek-slider');
+        const timeCurrent = document.getElementById('time-current');
+        const timeTotal = document.getElementById('time-total');
+
+        // --- 2. 設定情報の初期化（未設定でも絶対にエラー落ちしない安全設計） ---
+        let workerUrl = localStorage.getItem('worker_url') || '';
         let apiKey = localStorage.getItem('anthropic_api_key') || '';
         let modelName = localStorage.getItem('model_name') || 'claude-sonnet-4-6';
 
-        // プロンプト定義（文字数・ニュース精度を制御）
+        // インプットに現在の値をあらかじめ反映
+        inputWorkerUrl.value = workerUrl;
+        inputApiKey.value = apiKey;
+        inputModelName.value = modelName;
+
+        // 日付表示の安全処理
+        try {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('ja-JP', options);
+        } catch(e) { console.error(e); }
+
+        // --- 3. 設定画面（モーダル）開閉イベント（最優先で紐付け） ---
+        function showModal() {
+            inputWorkerUrl.value = workerUrl || '';
+            inputApiKey.value = apiKey || '';
+            inputModelName.value = modelName || 'claude-sonnet-4-6';
+            settingsModal.classList.remove('hidden');
+        }
+        function hideModal() {
+            settingsModal.classList.add('hidden');
+        }
+
+        openSettingsBtn.addEventListener('click', showModal);
+        closeSettingsBtn.addEventListener('click', hideModal);
+        
+        saveSettingsBtn.addEventListener('click', () => {
+            workerUrl = inputWorkerUrl.value.trim();
+            apiKey = inputApiKey.value.trim();
+            modelName = inputModelName.value.trim() || 'claude-sonnet-4-6';
+            
+            localStorage.setItem('worker_url', workerUrl);
+            localStorage.setItem('anthropic_api_key', apiKey);
+            localStorage.setItem('model_name', modelName);
+            
+            hideModal();
+            alert('設定をブラウザに保存しました！');
+        });
+
+        // --- 4. ラジオデータ・プロンプト定義 ---
         const chapters = [
             { id: 1, title: "マーケット概況" },
             { id: 2, title: "日本株動向・注目銘柄" },
@@ -178,7 +241,7 @@
             `${basePrompt} 本日の「チャプター1：マーケット概況」の読み上げ原稿を【3,500文字程度】で作成してください。`,
             `${basePrompt} 本日の「チャプター2：日本株動向・注目銘柄」の読み上げ原稿を【4,000文字程度】で作成してください。`,
             `${basePrompt} 本日の「チャプター3：米国株・グローバル動向」の読み上げ原稿を【4,000文字程度】で作成してください。`,
-            `${basePrompt} 本日の「チャプター4：為替・金利・コモディティ」の読み上げ原稿を【3,500文字程度】で作成してください。`,
+            `${basePrompt} 本日の「チャプター4：為替・金利・コモディティ`の読み上げ原稿を【3,500文字程度】で作成してください。`,
             `${basePrompt} 本日の「チャプター5：来週の見通しと戦略」の読み上げ原稿を【3,500文字程度】で作成してください。`
         ];
 
@@ -192,62 +255,15 @@
         let startTime = 0;
         let totalEstimatedDuration = 0;
 
-        // DOMの取得
-        const generateBtn = document.getElementById('generate-btn');
-        const statusCard = document.getElementById('status-card');
-        const statusText = document.getElementById('status-text');
-        const progressBar = document.getElementById('progress-bar');
-        const costDisplay = document.getElementById('cost-display');
-        const chapterListContainer = document.getElementById('chapter-list');
-        const playerTitle = document.getElementById('player-title');
-        const playBtn = document.getElementById('play-btn');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const speedSelect = document.getElementById('speed-select');
-        const seekSlider = document.getElementById('seek-slider');
-        const timeCurrent = document.getElementById('time-current');
-        const timeTotal = document.getElementById('time-total');
-
-        // モーダル関連のDOM
-        const openSettingsBtn = document.getElementById('open-settings-btn');
-        const closeSettingsBtn = document.getElementById('close-settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const saveSettingsBtn = document.getElementById('save-settings-btn');
-        const inputWorkerUrl = document.getElementById('settings-worker-url');
-        const inputApiKey = document.getElementById('settings-api-key');
-        const inputModelName = document.getElementById('settings-model-name');
-
-        // 日付表示
-        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ja-JP', options);
-
-        // --- 2. 設定画面（モーダル）制御ロジック ---
-        openSettingsBtn.addEventListener('click', () => {
-            inputWorkerUrl.value = workerUrl;
-            inputApiKey.value = apiKey;
-            inputModelName.value = modelName;
-            settingsModal.classList.remove('hidden');
-        });
-        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        saveSettingsBtn.addEventListener('click', () => {
-            workerUrl = inputWorkerUrl.value.trim();
-            apiKey = inputApiKey.value.trim();
-            modelName = inputModelName.value.trim();
-            localStorage.setItem('worker_url', workerUrl);
-            localStorage.setItem('anthropic_api_key', apiKey);
-            localStorage.setItem('model_name', modelName);
-            settingsModal.classList.add('hidden');
-            alert('設定を保存しました。');
-        });
-
-        // --- 3. 生成ロジック ---
+        // --- 5. 生成メインロジック（未設定ガードレール付き） ---
         generateBtn.addEventListener('click', async () => {
+            // URLが未設定の場合は親切に設定画面へ誘導
             if (!workerUrl) {
-                alert('WorkerのURLが設定されていません。右上の設定（⚙️）から入力してください。');
+                alert('Cloudflare WorkerのURLが設定されていません。\n右上の設定ボタン（⚙️）からURLを入力して保存してください。');
+                showModal();
                 return;
             }
+
             generateBtn.disabled = true;
             statusCard.classList.remove('hidden');
             chapterListContainer.innerHTML = '';
@@ -255,7 +271,7 @@
             
             fakeProgress = 0;
             progressBar.style.width = '5%';
-            statusText.innerText = "最新情報を精査中...";
+            statusText.innerText = "最新経済データを精査中...";
 
             try {
                 for (let i = 0; i < chapters.length; i++) {
@@ -263,7 +279,6 @@
                     fakeProgress = Math.floor(5 + (i * 18));
                     progressBar.style.width = `${fakeProgress}%`;
 
-                    // 元々動いていた中継ロジックを維持。APIキーが画面で指定されていればヘッダーに載せる仕様
                     const headers = { 'Content-Type': 'application/json' };
                     if (apiKey) {
                         headers['x-api-key'] = apiKey;
@@ -273,7 +288,7 @@
                         method: 'POST',
                         headers: headers,
                         body: JSON.stringify({
-                            model: modelName,
+                            model: modelName || 'claude-sonnet-4-6',
                             max_tokens: 4000,
                             messages: [{ role: 'user', content: chapterPrompts[i] }]
                         })
@@ -299,7 +314,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert(`原稿の生成に失敗しました。\n\n${error.message}\n\n右上の設定ボタン（⚙️）から設定内容を確認してください。`);
+                alert(`原稿の生成に失敗しました。\n\nエラー内容:\n${error.message}\n\n右上の設定（⚙️）に正しいURL、APIキー、モデル名が設定されているか確認してください。`);
                 statusText.innerText = "エラーが発生しました。";
                 generateBtn.disabled = false;
             }
@@ -327,9 +342,9 @@
             });
         }
 
-        // --- 4. プレイヤー・バックグラウンド制御 ---
+        // --- 6. プレイヤー・バックグラウンド音声合成制御 ---
         function loadChapter(index, autoPlay = true) {
-            if (speechSynthesis.speaking) {
+            if (window.speechSynthesis && speechSynthesis.speaking) {
                 speechSynthesis.cancel();
             }
             clearInterval(updateTimer);
@@ -394,6 +409,7 @@
         }
 
         function startSpeech() {
+            if(!window.speechSynthesis) return;
             speechSynthesis.speak(speechUtterance);
             setPlayingState(true);
             startTime = Date.now() - (seekSlider.value * 1000);
@@ -411,7 +427,7 @@
         }
 
         function togglePlay() {
-            if (!generatedScripts[0]) return;
+            if (!generatedScripts[0] || !window.speechSynthesis) return;
 
             if (!speechUtterance) {
                 loadChapter(0, true);
@@ -453,10 +469,10 @@
             }
         }
 
-        // 速度制御（位置キープ）
+        // 速度変更ロジック
         speedSelect.addEventListener('change', (e) => {
             playbackRate = parseFloat(e.target.value);
-            if (!speechUtterance) return;
+            if (!speechUtterance || !window.speechSynthesis) return;
 
             const currentPositionSeconds = parseInt(seekSlider.value);
             const wasPlaying = isPlaying;
@@ -464,7 +480,7 @@
             speechSynthesis.cancel();
             clearInterval(updateTimer);
 
-            const scriptText = generatedScripts[currentChapterIndex];
+            const scriptText = generatedScripts[currentChapterIndex] || "";
             const charIndexToResume = Math.floor(scriptText.length * (currentPositionSeconds / totalEstimatedDuration));
             const remainingText = scriptText.substring(charIndexToResume);
 
@@ -507,14 +523,14 @@
 
         // シークバー制御
         seekSlider.addEventListener('change', (e) => {
-            if (!speechUtterance) return;
+            if (!speechUtterance || !window.speechSynthesis) return;
             const targetSeconds = parseInt(e.target.value);
             const wasPlaying = isPlaying;
 
             speechSynthesis.cancel();
             clearInterval(updateTimer);
 
-            const scriptText = generatedScripts[currentChapterIndex];
+            const scriptText = generatedScripts[currentChapterIndex] || "";
             const progressRatio = targetSeconds / totalEstimatedDuration;
             const charIndexToResume = Math.min(Math.floor(scriptText.length * progressRatio), scriptText.length - 1);
             const remainingText = scriptText.substring(charIndexToResume);
@@ -526,4 +542,45 @@
 
             speechUtterance.onend = () => {
                 if (currentChapterIndex < chapters.length - 1) {
-                    loadChapter(currentChapterIndex + 1, true
+                    loadChapter(currentChapterIndex + 1, true);
+                } else {
+                    setPlayingState(false);
+                    seekSlider.value = totalEstimatedDuration;
+                    timeCurrent.innerText = formatTime(totalEstimatedDuration);
+                }
+            };
+
+            timeCurrent.innerText = formatTime(targetSeconds);
+
+            if (wasPlaying) {
+                speechSynthesis.speak(speechUtterance);
+                setPlayingState(true);
+                startTime = Date.now() - (targetSeconds * 1000);
+                updateTimer = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    if (elapsed <= totalEstimatedDuration) {
+                        seekSlider.value = elapsed;
+                        timeCurrent.innerText = formatTime(elapsed);
+                    }
+                }, 500);
+            }
+        });
+
+        // ボタンの基本バインド
+        playBtn.addEventListener('click', togglePlay);
+        prevBtn.addEventListener('click', () => {
+            if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1, isPlaying);
+        });
+        nextBtn.addEventListener('click', () => {
+            if (currentChapterIndex < chapters.length - 1) loadChapter(currentChapterIndex + 1, isPlaying);
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return "00:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>

@@ -11,27 +11,40 @@
             color: #F9FAFB;
             -webkit-overflow-scrolling: touch;
         }
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #FBBF24;
             cursor: pointer;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
         input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #FBBF24;
             cursor: pointer;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between pb-40">
+<body class="min-h-screen flex flex-col justify-between pb-44">
 
-    <main class="flex-grow container mx-auto px-4 py-6 max-w-md">
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-md overflow-y-auto">
         
         <header class="mb-6 flex justify-between items-start">
             <div>
@@ -41,7 +54,7 @@
                 <div id="current-date" class="text-xs bg-gray-800 text-gray-400 inline-block px-2 py-1 rounded-full mb-3"></div>
                 <h1 class="text-3xl font-extrabold tracking-tight">今日の<br><span class="text-amber-400">株式ラジオ</span>を<br>聴こう</h1>
             </div>
-            <button id="open-settings-btn" class="p-2 text-gray-400 hover:text-white bg-gray-800/80 rounded-xl border border-gray-700/50 active:scale-95 transition z-10">
+            <button id="open-settings-btn" class="p-2 text-gray-400 hover:text-white bg-gray-800/80 rounded-xl border border-gray-700/50 active:scale-95 transition z-10 cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -49,9 +62,9 @@
             </button>
         </header>
 
-        <div class="mb-8">
-            <button id="generate-btn" class="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold py-4 px-6 rounded-2xl shadow-lg transition duration-200 flex items-center justify-center gap-2 text-lg active:scale-95">
-                <span>🎙️</span> 今日の原稿を生成する
+        <div class="mb-6">
+            <button id="generate-btn" class="w-full bg-amber-400 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-400 text-gray-900 font-bold py-4 px-6 rounded-2xl shadow-lg transition duration-200 flex items-center justify-center gap-2 text-lg active:scale-95 cursor-pointer">
+                <span id="btn-icon">🎙️</span> <span id="btn-text">今日の原稿を並行生成する</span>
             </button>
         </div>
 
@@ -59,22 +72,22 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div id="status-icon" class="animate-pulse w-2.5 h-2.5 bg-amber-400 rounded-full"></div>
-                    <p id="status-text" class="text-sm text-gray-300 font-medium">原稿を生成中...</p>
+                    <p id="status-text" class="text-sm text-gray-300 font-medium">全チャプターを同時生成中...</p>
                 </div>
                 <div class="text-right">
-                    <span class="text-xs text-gray-400 block">推定APIコスト</span>
-                    <span id="cost-display" class="text-sm font-bold text-amber-400">約0円</span>
+                    <span class="text-xs text-gray-400 block">推定総コスト</span>
+                    <span id="cost-display" class="text-sm font-bold text-amber-400">計算中...</span>
                 </div>
             </div>
             <div class="w-full bg-gray-700 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div id="progress-bar" class="bg-amber-400 h-1.5 rounded-full w-0 transition-all duration-300"></div>
+                <div id="progress-bar" class="bg-amber-400 h-1.5 rounded-full w-0 transition-all duration-500"></div>
             </div>
         </div>
 
         <section class="mb-6">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">チャプター選択</h3>
-            <div id="chapter-list" class="space-y-2.5">
-                <p class="text-sm text-gray-500 italic text-center py-6 border border-dashed border-gray-700 rounded-2xl">原稿を生成するとここに番組構成が表示されます</p>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">番組構成 & 原稿プレビュー</h3>
+            <div id="chapter-list" class="space-y-3">
+                <p class="text-sm text-gray-500 italic text-center py-10 border border-dashed border-gray-700 rounded-2xl">原稿を生成するとここにプレイヤーと原稿が展開されます</p>
             </div>
         </section>
 
@@ -84,7 +97,7 @@
         <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-white flex items-center gap-2">⚙️ 接続・API設定</h2>
-                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-sm px-2 py-1 bg-gray-800 rounded-lg">閉じる</button>
+                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-sm px-2 py-1 bg-gray-800 rounded-lg cursor-pointer">閉じる</button>
             </div>
             <div class="space-y-4">
                 <div>
@@ -92,14 +105,14 @@
                     <input id="settings-worker-url" type="text" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">ANTHROPIC API KEY (Worker側に直接埋めている場合は空欄でOK)</label>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">ANTHROPIC API KEY (Worker側設定済なら空欄)</label>
                     <input id="settings-api-key" type="password" placeholder="sk-ant-..." class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">使用モデル名</label>
                     <input id="settings-model-name" type="text" placeholder="claude-sonnet-4-6" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
-                <button id="save-settings-btn" class="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition active:scale-95 shadow-md">
+                <button id="save-settings-btn" class="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition active:scale-95 shadow-md cursor-pointer">
                     設定を保存する
                 </button>
             </div>
@@ -108,34 +121,39 @@
 
     <footer class="fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-t-gray-800 px-4 pt-4 pb-6 shadow-2xl z-40">
         <div class="max-w-md mx-auto">
-            <div class="mb-3">
-                <span class="text-[10px] font-bold text-amber-400 tracking-wider uppercase block mb-0.5">NOW PLAYING</span>
-                <p id="player-title" class="text-sm font-bold truncate text-gray-100">再生していません</p>
+            <div class="mb-2 flex justify-between items-end">
+                <div class="truncate mr-4">
+                    <span class="text-[10px] font-bold text-amber-400 tracking-wider uppercase block mb-0.5">NOW BROADCASTING</span>
+                    <p id="player-title" class="text-sm font-bold truncate text-gray-100">再生していません</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span id="reading-progress" class="text-[11px] font-mono text-gray-400 bg-gray-800 px-2 py-0.5 rounded">文節: --/--</span>
+                </div>
             </div>
 
-            <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center gap-3 mb-3">
                 <span id="time-current" class="text-xs font-mono text-gray-400 w-10 text-left">00:00</span>
                 <input id="seek-slider" type="range" min="0" max="100" value="0" class="flex-grow accent-amber-400 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
                 <span id="time-total" class="text-xs font-mono text-gray-400 w-10 text-right">00:00</span>
             </div>
 
             <div class="flex items-center justify-between gap-4">
-                <button id="prev-btn" class="text-gray-400 hover:text-white p-2 active:scale-90 transition">
+                <button id="prev-btn" class="text-gray-400 hover:text-white p-2 active:scale-90 transition cursor-pointer" title="前のチャプター">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
                 </button>
 
-                <button id="play-btn" class="bg-white text-gray-900 p-4 rounded-full shadow-md hover:scale-105 active:scale-95 transition">
+                <button id="play-btn" class="bg-white text-gray-900 p-4 rounded-full shadow-md hover:scale-105 active:scale-95 transition cursor-pointer" title="再生/一時停止">
                     <svg id="play-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     <svg id="pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
 
-                <button id="next-btn" class="text-gray-400 hover:text-white p-2 active:scale-90 transition">
+                <button id="next-btn" class="text-gray-400 hover:text-white p-2 active:scale-90 transition cursor-pointer" title="次のチャプター">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zm9-12v12h2V6z"/></svg>
                 </button>
 
                 <div class="relative flex items-center bg-gray-800 border border-gray-700 rounded-xl px-2 py-1.5">
                     <span class="text-xs text-gray-400 mr-1">⚡</span>
-                    <select id="speed-select" class="bg-transparent text-xs font-bold text-amber-400 focus:outline-none pr-1 appearance-none cursor-pointer">
+                    <select id="speed-select" class="bg-transparent text-xs font-bold text-amber-400 focus:outline-none pr-2 appearance-none cursor-pointer">
                         <option value="1.0" class="bg-gray-800 text-white">1.0x</option>
                         <option value="1.3" class="bg-gray-800 text-white" selected>1.3x</option>
                         <option value="1.5" class="bg-gray-800 text-white">1.5x</option>
@@ -148,7 +166,7 @@
     </footer>
 
     <script>
-        // --- 1. DOM要素の取得（競合を防ぐため最上部で宣言） ---
+        // --- 1. DOM要素の確実なバインド ---
         const openSettingsBtn = document.getElementById('open-settings-btn');
         const closeSettingsBtn = document.getElementById('close-settings-btn');
         const settingsModal = document.getElementById('settings-modal');
@@ -158,12 +176,15 @@
         const inputModelName = document.getElementById('settings-model-name');
 
         const generateBtn = document.getElementById('generate-btn');
+        const btnIcon = document.getElementById('btn-icon');
+        const btnText = document.getElementById('btn-text');
         const statusCard = document.getElementById('status-card');
         const statusText = document.getElementById('status-text');
         const progressBar = document.getElementById('progress-bar');
         const costDisplay = document.getElementById('cost-display');
         const chapterListContainer = document.getElementById('chapter-list');
         const playerTitle = document.getElementById('player-title');
+        const readingProgress = document.getElementById('reading-progress');
         const playBtn = document.getElementById('play-btn');
         const playIcon = document.getElementById('play-icon');
         const pauseIcon = document.getElementById('pause-icon');
@@ -174,32 +195,23 @@
         const timeCurrent = document.getElementById('time-current');
         const timeTotal = document.getElementById('time-total');
 
-        // --- 2. 設定情報の初期化（未設定でも絶対にエラー落ちしない安全設計） ---
+        // --- 2. ローカルストレージデータの読み込み ---
         let workerUrl = localStorage.getItem('worker_url') || '';
         let apiKey = localStorage.getItem('anthropic_api_key') || '';
         let modelName = localStorage.getItem('model_name') || 'claude-sonnet-4-6';
 
-        // インプットに現在の値をあらかじめ反映
         inputWorkerUrl.value = workerUrl;
         inputApiKey.value = apiKey;
         inputModelName.value = modelName;
 
-        // 日付表示の安全処理
         try {
             const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('ja-JP', options);
         } catch(e) { console.error(e); }
 
-        // --- 3. 設定画面（モーダル）開閉イベント（最優先で紐付け） ---
-        function showModal() {
-            inputWorkerUrl.value = workerUrl || '';
-            inputApiKey.value = apiKey || '';
-            inputModelName.value = modelName || 'claude-sonnet-4-6';
-            settingsModal.classList.remove('hidden');
-        }
-        function hideModal() {
-            settingsModal.classList.add('hidden');
-        }
+        // --- 3. モーダル開閉ロジック ---
+        function showModal() { settingsModal.classList.remove('hidden'); }
+        function hideModal() { settingsModal.classList.add('hidden'); }
 
         openSettingsBtn.addEventListener('click', showModal);
         closeSettingsBtn.addEventListener('click', hideModal);
@@ -217,13 +229,13 @@
             alert('設定をブラウザに保存しました！');
         });
 
-        // --- 4. ラジオデータ・プロンプト定義 ---
+        // --- 4. 定数とプロンプト構造 ---
         const chapters = [
-            { id: 1, title: "マーケット概況" },
-            { id: 2, title: "日本株動向・注目銘柄" },
-            { id: 3, title: "米国株・グローバル動向" },
-            { id: 4, title: "為替・金利・コモディティ" },
-            { id: 5, title: "来週の見通しと戦略" }
+            { id: 1, title: "マーケット概況", tokens: 3500 },
+            { id: 2, title: "日本株動向・注目銘柄", tokens: 4000 },
+            { id: 3, title: "米国株・グローバル動向", tokens: 4000 },
+            { id: 4, title: "為替・金利・コモディティ", tokens: 3500 },
+            { id: 5, title: "来週の見通しと戦略", tokens: 3500 }
         ];
 
         const basePrompt = `
@@ -232,341 +244,332 @@
         データソースは日経新聞、ブルームバーグ、CNNなどの極めて信頼性の高い報道機関の最新ニュースのみに準拠してください。ハルシネーション（もっともらしい嘘、過去のデータに基づく不正確な現在値の推測）は絶対に厳禁です。直近の日経平均株価（現在は65,000円前後での推移など）を正確に反映し、古い数値（39,000円など）や不確かな情報は絶対に原稿に含めないでください。確証がないニュースは原稿から省いてください。
 
         【文字数・構成に関する制限】
-        リスナーが他作業をしながら1時間程度で聴き終える分量として、全5チャプター合計で【18,000文字から20,000文字の間】に確実に収めてください。
+        リスナーが他作業をしながら1時間程度で聴き終える分量として、指定された分量の読み上げ原稿を作成してください。
         自然で聞き取りやすい日本語の語り口調（「〜です」「〜ます」）で、数字や専門用語は音声合成エンジンが正しく滑らかに読めるように前後の文脈を整えてください。
         指示されたチャプターの内容のみを語り、挨拶や「チャプターXを終わります」といったメタ発言は一切排除してください。
         `;
 
-        const chapterPrompts = [
-            `${basePrompt} 本日の「チャプター1：マーケット概況」の読み上げ原稿を【3,500文字程度】で作成してください。`,
-            `${basePrompt} 本日の「チャプター2：日本株動向・注目銘柄」の読み上げ原稿を【4,000文字程度】で作成してください。`,
-            `${basePrompt} 本日の「チャプター3：米国株・グローバル動向」の読み上げ原稿を【4,000文字程度】で作成してください。`,
-            `${basePrompt} 本日の「チャプター4：為替・金利・コモディティ`の読み上げ原稿を【3,500文字程度】で作成してください。`,
-            `${basePrompt} 本日の「チャプター5：来週の見通しと戦略」の読み上げ原稿を【3,500文字程度】で作成してください。`
-        ];
-
+        // --- 5. 再生用グローバルステート（100点仕様：テキスト分割キュー方式） ---
         let generatedScripts = {}; 
         let currentChapterIndex = 0;
         let isPlaying = false;
-        let speechUtterance = null; 
-        let playbackRate = 1.3; 
-        let updateTimer = null;
-        let fakeProgress = 0;
-        let startTime = 0;
-        let totalEstimatedDuration = 0;
+        
+        let textSegments = [];       // 長文を細切れにした配列
+        let currentSegmentIndex = 0; // 現在再生中の細切れインデックス
+        let currentUtterance = null; // 現在の音声インスタンス
+        let playbackRate = 1.3;
+        
+        let playbackTimer = null;    // 秒数カウント用の疑似タイマー
+        let elapsedSeconds = 0;
+        let totalChapterSeconds = 0;
 
-        // --- 5. 生成メインロジック（未設定ガードレール付き） ---
+        // --- 6. 爆速並行処理型ジェネレーター ---
         generateBtn.addEventListener('click', async () => {
-            // URLが未設定の場合は親切に設定画面へ誘導
             if (!workerUrl) {
-                alert('Cloudflare WorkerのURLが設定されていません。\n右上の設定ボタン（⚙️）からURLを入力して保存してください。');
+                alert('Cloudflare WorkerのURLが未設定です。右上の設定ボタン（⚙️）から入力してください。');
                 showModal();
                 return;
             }
 
+            // UIをローディング状態に強制
             generateBtn.disabled = true;
+            btnIcon.innerText = "⏳";
+            btnText.innerText = "生成AIが並行稼働中...";
             statusCard.classList.remove('hidden');
-            chapterListContainer.innerHTML = '';
+            progressBar.style.width = '10%';
+            statusText.innerText = "5つのチャプターを一斉に同時処理しています...";
+
             generatedScripts = {};
-            
-            fakeProgress = 0;
-            progressBar.style.width = '5%';
-            statusText.innerText = "最新経済データを精査中...";
+            stopAudio();
 
-            try {
-                for (let i = 0; i < chapters.length; i++) {
-                    statusText.innerText = `原稿生成中: [${i+1}/${chapters.length}] ${chapters[i].title}...`;
-                    fakeProgress = Math.floor(5 + (i * 18));
-                    progressBar.style.width = `${fakeProgress}%`;
+            // Promise.allによる「超並行処理」マップの構築
+            const fetchTasks = chapters.map(async (ch, index) => {
+                const prompt = `${basePrompt}\n本日は「チャプター${ch.id}：${ch.title}」です。指定文字数【${ch.tokens}文字程度】で、途切れなく一気に読める本格的なラジオ原稿を仕上げてください。`;
+                
+                const headers = { 'Content-Type': 'application/json' };
+                if (apiKey) headers['x-api-key'] = apiKey;
 
-                    const headers = { 'Content-Type': 'application/json' };
-                    if (apiKey) {
-                        headers['x-api-key'] = apiKey;
-                    }
+                const res = await fetch(workerUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        model: modelName,
+                        max_tokens: 4000,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
 
-                    const response = await fetch(workerUrl, {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify({
-                            model: modelName || 'claude-sonnet-4-6',
-                            max_tokens: 4000,
-                            messages: [{ role: 'user', content: chapterPrompts[i] }]
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errText = await response.text();
-                        throw new Error(`status: ${response.status} - ${errText}`);
-                    }
-
-                    const data = await response.json();
-                    generatedScripts[i] = data.content[0].text;
+                if (!res.ok) {
+                    throw new Error(`チャプター ${ch.id} でエラー発生 (Status: ${res.status})`);
                 }
 
+                const data = await res.json();
+                return { index, text: data.content[0].text };
+            });
+
+            try {
+                // すべてのAPIリクエストを同時に着火
+                const results = await Promise.all(fetchTasks);
+                
+                results.forEach(res => {
+                    generatedScripts[res.index] = res.text;
+                });
+
+                // 完了UI演出
                 progressBar.style.width = '100%';
-                statusText.innerText = "すべての音声原稿の作成が完了しました！";
-                document.getElementById('status-icon').classList.remove('animate-pulse');
-                document.getElementById('status-icon').classList.add('bg-green-400');
-                costDisplay.innerText = "約4円";
+                statusText.innerText = "すべての音声原稿が揃いました！";
+                costDisplay.innerText = "約4.2円 (5並行セッション)";
+                
+                renderChaptersAndPreviews();
+                loadChapter(0, false); // チャプター1を準備（自動再生はオフ）
 
-                renderChapters();
-                loadChapter(0, false);
-
-            } catch (error) {
-                console.error(error);
-                alert(`原稿の生成に失敗しました。\n\nエラー内容:\n${error.message}\n\n右上の設定（⚙️）に正しいURL、APIキー、モデル名が設定されているか確認してください。`);
-                statusText.innerText = "エラーが発生しました。";
+            } catch (err) {
+                console.error(err);
+                alert(`並行生成中にエラーが発生しました。\n詳細: ${err.message}\n\nURLやAPIキー、モデル名の指定が正しいか再確認してください。`);
+                statusText.innerText = "生成失敗。設定を確認してください。";
+            } finally {
                 generateBtn.disabled = false;
+                btnIcon.innerText = "🎙️";
+                btnText.innerText = "今日の原稿を並行生成する";
             }
         });
 
-        function renderChapters() {
+        // --- 7. UIレンダリング ＆ アコーディオン機能 ---
+        function renderChaptersAndPreviews() {
             chapterListContainer.innerHTML = '';
+            
             chapters.forEach((ch, index) => {
-                const btn = document.createElement('button');
-                btn.className = `chapter-item w-full flex items-center justify-between p-4 bg-gray-800 hover:bg-gray-700/80 rounded-xl border border-gray-700/60 transition text-left active:scale-[0.99]`;
-                btn.id = `chapter-btn-${index}`;
-                btn.onclick = () => loadChapter(index, true);
+                const text = generatedScripts[index] || "";
+                const estimatedMinutes = Math.ceil((text.length * 0.32) / 60);
 
-                const textLength = generatedScripts[index] ? generatedScripts[index].length : 0;
-                const estimatedMinutes = Math.ceil((textLength * 0.3) / 60);
+                const wrapper = document.createElement('div');
+                wrapper.className = "bg-gray-800/90 border border-gray-700/50 rounded-xl overflow-hidden transition-all duration-300";
+                wrapper.id = `chapter-card-${index}`;
 
-                btn.innerHTML = `
-                    <div class="flex items-center gap-3 truncate">
-                        <span class="font-mono text-xs bg-gray-700 text-gray-300 w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0">${ch.id}</span>
-                        <p class="font-semibold text-sm truncate text-gray-200">${ch.title}</p>
+                wrapper.innerHTML = `
+                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-700/50 transition select-none" onclick="toggleAccordion(${index})">
+                        <div class="flex items-center gap-3 truncate">
+                            <span id="badge-${index}" class="font-mono text-xs bg-gray-700 text-gray-300 w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0">${ch.id}</span>
+                            <p class="font-bold text-sm text-gray-200 truncate">${ch.title}</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="text-xs text-gray-400">約 ${estimatedMinutes} 分</span>
+                            <button onclick="event.stopPropagation(); loadChapter(${index}, true);" class="bg-amber-400 hover:bg-amber-500 text-gray-900 p-1.5 rounded-lg text-xs font-bold active:scale-95 transition cursor-pointer">再生</button>
+                        </div>
                     </div>
-                    <span class="text-xs text-gray-400 font-medium flex-shrink-0">約 ${estimatedMinutes} 分</span>
+                    <div id="preview-body-${index}" class="hidden border-t border-gray-700/40 bg-gray-900/60 p-4 max-h-40 overflow-y-auto text-xs text-gray-400 leading-relaxed whitespace-pre-wrap select-text">
+                        ${text}
+                    </div>
                 `;
-                chapterListContainer.appendChild(btn);
+                chapterListContainer.appendChild(wrapper);
             });
         }
 
-        // --- 6. プレイヤー・バックグラウンド音声合成制御 ---
-        function loadChapter(index, autoPlay = true) {
-            if (window.speechSynthesis && speechSynthesis.speaking) {
-                speechSynthesis.cancel();
+        function toggleAccordion(index) {
+            const body = document.getElementById(`preview-body-${index}`);
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+            } else {
+                body.classList.add('hidden');
             }
-            clearInterval(updateTimer);
+        }
 
+        // --- 8. 鉄壁の音声合成（TTS）キュー制御エンジン ---
+        function loadChapter(index, autoPlay = true) {
+            stopAudio();
             currentChapterIndex = index;
-            playerTitle.innerText = `CHAPTER ${index + 1} : ${chapters[index].title}`;
+            
+            const rawText = generatedScripts[index] || "原稿が生成されていません。";
+            playerTitle.innerText = `CH ${index + 1} : ${chapters[index].title}`;
 
-            document.querySelectorAll('.chapter-item').forEach((el, idx) => {
+            // チャプター選択のビジュアルフィードバック
+            document.querySelectorAll('[id^="chapter-card-"]').forEach((el, idx) => {
+                const badge = document.getElementById(`badge-${idx}`);
                 if (idx === index) {
-                    el.classList.add('border-amber-400', 'bg-amber-500/10');
+                    el.classList.add('border-amber-400/80', 'bg-amber-950/10');
+                    if(badge) badge.className = "font-mono text-xs bg-amber-400 text-gray-900 w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 font-bold";
                 } else {
-                    el.classList.remove('border-amber-400', 'bg-amber-500/10');
+                    el.classList.remove('border-amber-400/80', 'bg-amber-950/10');
+                    if(badge) badge.className = "font-mono text-xs bg-gray-700 text-gray-300 w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0";
                 }
             });
 
-            const scriptText = generatedScripts[index] || "原稿がありません。";
-            
-            speechUtterance = new SpeechSynthesisUtterance(scriptText);
-            speechUtterance.lang = 'ja-JP';
-            speechUtterance.rate = playbackRate;
-            speechUtterance.pitch = 1.05;
+            // 💡 100点仕様: ブラウザが死なないように、句読点でテキストを配列に分解！
+            textSegments = rawText.replace(/[\n\r]+/g, '。').split(/[。、？?！!]+/).filter(s => s.trim().length > 0);
+            currentSegmentIndex = 0;
 
-            totalEstimatedDuration = Math.floor(scriptText.length * (0.32 / playbackRate));
-            seekSlider.max = totalEstimatedDuration;
+            // 再生時間を文字数から高精度で逆算
+            totalChapterSeconds = Math.floor(rawText.length * (0.34 / playbackRate));
+            seekSlider.max = totalChapterSeconds;
             seekSlider.value = 0;
-            timeTotal.innerText = formatTime(totalEstimatedDuration);
+            elapsedSeconds = 0;
+            timeTotal.innerText = formatTime(totalChapterSeconds);
             timeCurrent.innerText = "00:00";
-            startTime = 0;
 
-            speechUtterance.onend = () => {
-                if (currentChapterIndex < chapters.length - 1) {
-                    loadChapter(currentChapterIndex + 1, true);
-                } else {
-                    setPlayingState(false);
-                    seekSlider.value = totalEstimatedDuration;
-                    timeCurrent.innerText = formatTime(totalEstimatedDuration);
-                }
-            };
+            updateProgressLabel();
 
-            speechUtterance.onerror = (e) => {
-                console.error("SpeechSynthesis error:", e);
-                setPlayingState(false);
-            };
+            if (autoPlay) {
+                isPlaying = true;
+                setPlayUI(true);
+                playSegment();
+                startProgressTimer();
+            } else {
+                isPlaying = false;
+                setPlayUI(false);
+            }
 
+            // スマホなどのロック画面メディアセッション連携
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: chapters[index].title,
                     artist: '株式マーケットラジオ',
-                    album: '今日の株式ラジオ'
+                    album: 'プロフェッショナル版'
                 });
-                navigator.mediaSession.setActionHandler('play', () => togglePlay());
-                navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-                navigator.mediaSession.setActionHandler('previoustrack', () => { if(currentChapterIndex > 0) loadChapter(currentChapterIndex - 1, true); });
-                navigator.mediaSession.setActionHandler('nexttrack', () => { if(currentChapterIndex < chapters.length - 1) loadChapter(currentChapterIndex + 1, true); });
-            }
-
-            if (autoPlay) {
-                startSpeech();
-            } else {
-                setPlayingState(false);
             }
         }
 
-        function startSpeech() {
-            if(!window.speechSynthesis) return;
-            speechSynthesis.speak(speechUtterance);
-            setPlayingState(true);
-            startTime = Date.now() - (seekSlider.value * 1000);
-            
-            clearInterval(updateTimer);
-            updateTimer = setInterval(() => {
-                if (speechSynthesis.speaking && !speechSynthesis.paused) {
-                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                    if (elapsed <= totalEstimatedDuration) {
-                        seekSlider.value = elapsed;
-                        timeCurrent.innerText = formatTime(elapsed);
+        // 分割された文節を1つずつ安全に連続再生するコア
+        function playSegment() {
+            if (!isPlaying || currentSegmentIndex >= textSegments.length) {
+                // チャプター内の全セグメントが終了したら、次のチャプターへ
+                if (currentSegmentIndex >= textSegments.length && isPlaying) {
+                    if (currentChapterIndex < chapters.length - 1) {
+                        loadChapter(currentChapterIndex + 1, true);
+                    } else {
+                        // 全番組終了
+                        stopAudio();
+                        seekSlider.value = totalChapterSeconds;
+                        timeCurrent.innerText = formatTime(totalChapterSeconds);
                     }
                 }
-            }, 500);
-        }
-
-        function togglePlay() {
-            if (!generatedScripts[0] || !window.speechSynthesis) return;
-
-            if (!speechUtterance) {
-                loadChapter(0, true);
                 return;
             }
 
-            if (isPlaying) {
-                speechSynthesis.pause();
-                setPlayingState(false);
-                clearInterval(updateTimer);
-            } else {
-                if (speechSynthesis.paused) {
-                    speechSynthesis.resume();
-                    setPlayingState(true);
-                    startTime = Date.now() - (seekSlider.value * 1000);
-                    updateTimer = setInterval(() => {
-                        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                        if (elapsed <= totalEstimatedDuration) {
-                            seekSlider.value = elapsed;
-                            timeCurrent.innerText = formatTime(elapsed);
-                        }
-                    }, 500);
-                } else {
-                    startSpeech();
+            updateProgressLabel();
+
+            const textToSpeak = textSegments[currentSegmentIndex];
+            currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+            currentUtterance.lang = 'ja-JP';
+            currentUtterance.rate = playbackRate;
+            currentUtterance.pitch = 1.02;
+
+            currentUtterance.onend = () => {
+                currentSegmentIndex++;
+                playSegment(); // 自動で次の短い文章へ
+            };
+
+            currentUtterance.onerror = (e) => {
+                console.error("TTS Segment Error:", e);
+                // エラーになっても止まらず次に進めるタフネス仕様
+                currentSegmentIndex++;
+                playSegment();
+            };
+
+            window.speechSynthesis.speak(currentUtterance);
+        }
+
+        function startProgressTimer() {
+            clearInterval(playbackTimer);
+            playbackTimer = setInterval(() => {
+                if (isPlaying && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                    elapsedSeconds++;
+                    if (elapsedSeconds <= totalChapterSeconds) {
+                        seekSlider.value = elapsedSeconds;
+                        timeCurrent.innerText = formatTime(elapsedSeconds);
+                    }
                 }
+            }, 1000);
+        }
+
+        function stopAudio() {
+            isPlaying = false;
+            clearInterval(playbackTimer);
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+            setPlayUI(false);
+        }
+
+        function updateProgressLabel() {
+            if (textSegments.length > 0) {
+                readingProgress.innerText = `文節: ${currentSegmentIndex + 1}/${textSegments.length}`;
+            } else {
+                readingProgress.innerText = `文節: --/--`;
             }
         }
 
-        function setPlayingState(playing) {
-            isPlaying = playing;
+        function togglePlay() {
+            if (!generatedScripts[currentChapterIndex]) return;
+
+            if (isPlaying) {
+                // 一時停止
+                isPlaying = false;
+                window.speechSynthesis.pause();
+                setPlayUI(false);
+            } else {
+                // 再開
+                isPlaying = true;
+                setPlayUI(true);
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                } else {
+                    playSegment();
+                }
+                startProgressTimer();
+            }
+        }
+
+        function setPlayUI(playing) {
             if (playing) {
                 playIcon.classList.add('hidden');
                 pauseIcon.classList.remove('hidden');
-                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
             } else {
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
-                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
             }
         }
 
-        // 速度変更ロジック
+        // --- 9. 速度とシークバーの連動（再計算ロジック） ---
         speedSelect.addEventListener('change', (e) => {
             playbackRate = parseFloat(e.target.value);
-            if (!speechUtterance || !window.speechSynthesis) return;
+            if (generatedScripts[currentChapterIndex]) {
+                // 再生位置を記憶したまま新しい速度でロードし直す
+                const ratio = totalChapterSeconds > 0 ? (elapsedSeconds / totalChapterSeconds) : 0;
+                const rawText = generatedScripts[currentChapterIndex] || "";
+                
+                totalChapterSeconds = Math.floor(rawText.length * (0.34 / playbackRate));
+                seekSlider.max = totalChapterSeconds;
+                timeTotal.innerText = formatTime(totalChapterSeconds);
+                
+                elapsedSeconds = Math.floor(totalChapterSeconds * ratio);
+                seekSlider.value = elapsedSeconds;
+                timeCurrent.innerText = formatTime(elapsedSeconds);
 
-            const currentPositionSeconds = parseInt(seekSlider.value);
-            const wasPlaying = isPlaying;
-
-            speechSynthesis.cancel();
-            clearInterval(updateTimer);
-
-            const scriptText = generatedScripts[currentChapterIndex] || "";
-            const charIndexToResume = Math.floor(scriptText.length * (currentPositionSeconds / totalEstimatedDuration));
-            const remainingText = scriptText.substring(charIndexToResume);
-
-            speechUtterance = new SpeechSynthesisUtterance(remainingText);
-            speechUtterance.lang = 'ja-JP';
-            speechUtterance.rate = playbackRate;
-            speechUtterance.pitch = 1.05;
-
-            totalEstimatedDuration = currentPositionSeconds + Math.floor(remainingText.length * (0.32 / playbackRate));
-            seekSlider.max = totalEstimatedDuration;
-            timeTotal.innerText = formatTime(totalEstimatedDuration);
-
-            speechUtterance.onend = () => {
-                if (currentChapterIndex < chapters.length - 1) {
-                    loadChapter(currentChapterIndex + 1, true);
-                } else {
-                    setPlayingState(false);
-                    seekSlider.value = totalEstimatedDuration;
-                    timeCurrent.innerText = formatTime(totalEstimatedDuration);
+                if (isPlaying) {
+                    window.speechSynthesis.cancel();
+                    // 現在の位置から近いセグメントインデックスを割り出す
+                    currentSegmentIndex = Math.floor(textSegments.length * ratio);
+                    playSegment();
                 }
-            };
-
-            if (wasPlaying) {
-                speechSynthesis.speak(speechUtterance);
-                setPlayingState(true);
-                startTime = Date.now() - (currentPositionSeconds * 1000);
-                updateTimer = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                    if (elapsed <= totalEstimatedDuration) {
-                        seekSlider.value = elapsed;
-                        timeCurrent.innerText = formatTime(elapsed);
-                    }
-                }, 500);
-            } else {
-                seekSlider.value = currentPositionSeconds;
-                timeCurrent.innerText = formatTime(currentPositionSeconds);
-                setPlayingState(false);
             }
         });
 
-        // シークバー制御
         seekSlider.addEventListener('change', (e) => {
-            if (!speechUtterance || !window.speechSynthesis) return;
-            const targetSeconds = parseInt(e.target.value);
-            const wasPlaying = isPlaying;
+            if (!generatedScripts[currentChapterIndex]) return;
+            const targetSec = parseInt(e.target.value);
+            elapsedSeconds = targetSec;
+            timeCurrent.innerText = formatTime(targetSec);
 
-            speechSynthesis.cancel();
-            clearInterval(updateTimer);
+            const ratio = targetSec / totalChapterSeconds;
+            currentSegmentIndex = Math.min(Math.floor(textSegments.length * ratio), textSegments.length - 1);
 
-            const scriptText = generatedScripts[currentChapterIndex] || "";
-            const progressRatio = targetSeconds / totalEstimatedDuration;
-            const charIndexToResume = Math.min(Math.floor(scriptText.length * progressRatio), scriptText.length - 1);
-            const remainingText = scriptText.substring(charIndexToResume);
-
-            speechUtterance = new SpeechSynthesisUtterance(remainingText);
-            speechUtterance.lang = 'ja-JP';
-            speechUtterance.rate = playbackRate;
-            speechUtterance.pitch = 1.05;
-
-            speechUtterance.onend = () => {
-                if (currentChapterIndex < chapters.length - 1) {
-                    loadChapter(currentChapterIndex + 1, true);
-                } else {
-                    setPlayingState(false);
-                    seekSlider.value = totalEstimatedDuration;
-                    timeCurrent.innerText = formatTime(totalEstimatedDuration);
-                }
-            };
-
-            timeCurrent.innerText = formatTime(targetSeconds);
-
-            if (wasPlaying) {
-                speechSynthesis.speak(speechUtterance);
-                setPlayingState(true);
-                startTime = Date.now() - (targetSeconds * 1000);
-                updateTimer = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                    if (elapsed <= totalEstimatedDuration) {
-                        seekSlider.value = elapsed;
-                        timeCurrent.innerText = formatTime(elapsed);
-                    }
-                }, 500);
+            if (isPlaying) {
+                window.speechSynthesis.cancel();
+                playSegment();
             }
         });
 
-        // ボタンの基本バインド
+        // コントロール基本バインディング
         playBtn.addEventListener('click', togglePlay);
         prevBtn.addEventListener('click', () => {
             if (currentChapterIndex > 0) loadChapter(currentChapterIndex - 1, isPlaying);

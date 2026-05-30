@@ -231,7 +231,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
 <div id="setupScreen" class="screen active">
   <div class="setup-inner">
     <div class="logo-mark">📻</div>
@@ -247,7 +246,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   </div>
 </div>
 
-<!-- MAIN SCREEN -->
 <div id="mainScreen" class="screen">
   <div class="topbar">
     <span class="topbar-title">📻 Market Radio</span>
@@ -346,7 +344,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   <div class="bottom-spacer"></div>
 </div>
 
-<!-- SCRIPT VIEWER -->
 <div id="scriptScreen" class="screen">
   <div class="script-header">
     <div class="back-btn" onclick="closeScript()">←</div>
@@ -358,7 +355,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   <div class="bottom-spacer"></div>
 </div>
 
-<!-- GENERATING OVERLAY -->
 <div class="gen-overlay" id="genOverlay">
   <div class="gen-spinner">📡</div>
   <div class="gen-label">原稿を生成中です</div>
@@ -366,7 +362,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   <div class="gen-progress"><div class="gen-progress-bar"></div></div>
 </div>
 
-<!-- SETTINGS PANEL -->
 <div class="settings-panel" id="settingsPanel" onclick="closeSettingsOutside(event)">
   <div class="settings-sheet">
     <div class="settings-handle"></div>
@@ -397,6 +392,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <button class="close-settings" onclick="closeSettings()">閉じる</button>
   </div>
 </div>
+
 <script>
 // ── STATE ──
 let apiKey = '';
@@ -506,7 +502,7 @@ async function generateScript() {
 
   const chapterPrompts = [
     `【CHAPTER 1の生成】\nあなたはプロの株式アナリスト兼ラジオパーソナリティです。本日${dateStr}の最新情報をもとにラジオ原稿を書いてください。\n■ CHAPTER 1：マーケット概況（日本株・米国株・為替）約15分\n- 日経平均・TOPIX・NYダウ・S&P500・ナスダック・ドル円の概況と背景\n耳で聴いてわかる自然な口語体（です・ます調）で、指定の時間（約15分）に見合う圧倒的なボリューム（目安3,000〜6,000文字以上）で詳細に語り尽くしてください。数字は「3万8500円」のように読みやすく記載してください。冒頭は必ず「📻 CHAPTER 1：マーケット概況」で始めてください。`,
-    `【CHAPTER 2の生成】\nあなたはプロの株式アナリスト兼ラジオパーソナリティです。本日${dateStr}の最新情報をもとにラジオ原稿を書いてください。\n■ CHAPTER 2：日本株 詳細レポート 約20分\n- 日経・TOPIXの詳細な動き、注目セクター・テーマ、個別銘柄ニュース3〜5銘柄\n耳で聴いてわかる自然な口語体（です・ます調）で、指定の時間（約20分）に見合う圧倒的なボリューム（目安4,000〜7,000文字以上）で詳細に語り尽くしてください。数字は「3万8500円」のように読みやすく記載してください。冒頭は必ず「📻 CHAPTER 2：日本株 詳細レポート」で始めてください。`,
+    `【CHAPTER 2の生成】\nあなたはプロの株式アナリスト兼ラジオパーソナリティです。本日${dateStr}の最新情報をもとにラジオ原稿を書いてください。\n■ CHAPTER 2：日本株 詳細レポート 約20分\n- 日経・TOPIXの詳細な動き、注目セクター・テーマ、個別銘柄ニュース3〜5銘柄\n耳で聴いてわかる自然な口語体（です・ます調）で、指定の時間（約20分）に見合う圧倒的なボリューム（目安4,000〜7,000文字以上）で詳細に語り尽くしてください。数字は「3万8500円」のように読みやすく記載してください。冒件は必ず「📻 CHAPTER 2：日本株 詳細レポート」で始めてください。`,
     `【CHAPTER 3の生成】\nあなたはプロの株式アナリスト兼ラジオパーソナリティです。本日${dateStr}の最新情報をもとにラジオ原稿を書いてください。\n■ CHAPTER 3：米国株・グローバル動向 約20分\n- NYダウ・S&P500・ナスダックの詳細、注目の米国企業・決算、FRB・金融政策\n耳で聴いてわかる自然な口語体（です・ます調）で、指定の時間（約20分）に見合う圧倒的なボリューム（目安4,000〜7,000文字以上）で詳細に語り尽くしてください。数字は「3万8500円」のように読みやすく記載してください。冒頭は必ず「📻 CHAPTER 3：米国株・グローバル動向」で始めてください。`,
     `【CHAPTER 4の生成】\nあなたはプロの株式アナリスト兼ラジオパーソナリティです。本日${dateStr}の最新情報をもとにラジオ原稿を書いてください。\n■ CHAPTER 4：為替・商品市場 約15分\n- ドル円・主要通貨、WTI原油・金価格、日本経済への影響\n耳で聴いてわかる自然な口語体（です・ます調）で、指定の時間（約15分）に見合う圧倒的なボリューム（目安3,000〜6,000文字以上）で詳細に語り尽くしてください。数字は「3万8500円」のように読みやすく記載してください。冒頭は必ず「📻 CHAPTER 4：為替・商品市場」で始めてください。`,
     `【CHAPTER 5の生成】\nあなたはプロの株式アナリスト兼ラジオパーソナリティです。本日${dateStr}の最新情報をもとにラジオ原稿を書いてください。\n■ CHAPTER 5：経済指標・今後の注目点 約15分\n- 直近の重要指標、来週の注目イベント、投資家へのまとめ3点\n耳で聴いてわかる自然な口語体（です・ます調）で、指定の時間（約15分）に見合う圧倒的なボリューム（目安3,000〜6,000文字以上）で詳細に語り尽くしてください。数字は「3万8500円」のように読みやすく記載してください。冒頭は必ず「📻 CHAPTER 5：経済指標・今後の注目点」で始めてください。`
@@ -558,7 +554,12 @@ async function generateScript() {
     document.getElementById('player').classList.add('visible');
     setStatus('全チャプターの生成が完了しました', 'ready');
 
-    selectAndPlay(0);
+    // ── ★ここを修正（原稿画面に強制移動させず、プレイヤー表示で自動再生） ──
+    currentChapter = 0;
+    elapsed = 0;
+    updateChapterUI();
+    updatePlayerUI();
+    startSpeech();
 
   } catch(e) {
     document.getElementById('genOverlay').classList.remove('visible');
@@ -576,18 +577,15 @@ function selectChapter(idx) {
   updateChapterUI();
   updatePlayerUI();
   
-  // チャプター選択時に原稿ビューアを連動させて画面を開く
+  // ── ★ここは維持（リストをタップした時だけ原稿ビューアを連動して画面を開く） ──
   openScript(idx);
   
   // 選択と同時に音声を自動再生
-  if (!isPlaying) {
-    startSpeech();
-  }
+  startSpeech();
 }
 
 function selectAndPlay(idx) {
   selectChapter(idx);
-  startSpeech();
 }
 
 function updateChapterUI() {
@@ -660,7 +658,18 @@ function onChapterEnd() {
   isPlaying = false;
   document.getElementById('playBtn').textContent = '▶';
   if (currentChapter < 4 && scripts[currentChapter + 1]) {
-    setTimeout(() => selectAndPlay(currentChapter + 1), 1500);
+    // 次のチャプターへ行くときは、原稿画面を開いている場合はその中身も更新
+    setTimeout(() => {
+      currentChapter++;
+      elapsed = 0;
+      updateChapterUI();
+      updatePlayerUI();
+      if (document.getElementById('scriptScreen').classList.contains('active')) {
+        document.getElementById('scriptTitle').textContent = chapters[currentChapter].title;
+        document.getElementById('scriptText').textContent = scripts[currentChapter];
+      }
+      startSpeech();
+    }, 1500);
   } else {
     setStatus('放送終了', 'ready');
   }
@@ -669,14 +678,30 @@ function onChapterEnd() {
 function prevChapter() {
   if (currentChapter > 0 && scripts[currentChapter - 1]) {
     synth.cancel(); clearInterval(timer); isPlaying = false;
-    selectAndPlay(currentChapter - 1);
+    currentChapter--;
+    elapsed = 0;
+    updateChapterUI();
+    updatePlayerUI();
+    if (document.getElementById('scriptScreen').classList.contains('active')) {
+      document.getElementById('scriptTitle').textContent = chapters[currentChapter].title;
+      document.getElementById('scriptText').textContent = scripts[currentChapter];
+    }
+    startSpeech();
   }
 }
 
 function nextChapter() {
   if (currentChapter < 4 && scripts[currentChapter + 1]) {
     synth.cancel(); clearInterval(timer); isPlaying = false;
-    selectAndPlay(currentChapter + 1);
+    currentChapter++;
+    elapsed = 0;
+    updateChapterUI();
+    updatePlayerUI();
+    if (document.getElementById('scriptScreen').classList.contains('active')) {
+      document.getElementById('scriptTitle').textContent = chapters[currentChapter].title;
+      document.getElementById('scriptText').textContent = scripts[currentChapter];
+    }
+    startSpeech();
   }
 }
 

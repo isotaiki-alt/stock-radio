@@ -7,8 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { background-color: #111827; color: #F9FAFB; }
-        /* クリックを阻害しないための強制設定 */
-        .btn-force { cursor: pointer !important; pointer-events: auto !important; position: relative; z-index: 50; }
+        .btn-force { cursor: pointer !important; pointer-events: auto !important; }
     </style>
 </head>
 <body class="min-h-screen pb-32">
@@ -28,43 +27,45 @@
     </div>
 
     <script>
-        // 【完全固定】指定されたモデル名のみを送信する
-        const TARGET_MODEL = 'claude-sonnet-4-6';
-
         document.getElementById('generate-btn').addEventListener('click', async () => {
             const url = localStorage.getItem('worker_url');
-            if (!url) return alert('Worker URLが設定されていません。');
+            if (!url) return alert('Worker URLが未設定です');
 
             const statusCard = document.getElementById('status-card');
             const statusText = document.getElementById('status-text');
-            
             statusCard.classList.remove('hidden');
-            statusText.innerText = '生成中... (モデル: ' + TARGET_MODEL + ')';
+            statusText.innerText = '生成中... (claude-sonnet-4-6)';
 
             try {
-                // 通信を同期的に待機し、エラーがあればcatchへ飛ばす
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: TARGET_MODEL, // モデル名を定数で強制注入
-                        apiKey: localStorage.getItem('api_key')
+                        model: 'claude-sonnet-4-6', // 成功実績のある指定
+                        max_tokens: 8192,
+                        messages: [{ role: "user", content: "株式マーケットのラジオ原稿を生成してください" }]
                     })
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.error?.message || '生成失敗: ' + response.status);
+                    throw new Error(data.error?.message || 'Status: ' + response.status);
                 }
 
                 statusText.innerText = '生成完了しました！';
                 alert('生成完了しました！');
             } catch (e) {
                 console.error(e);
-                statusText.innerText = 'エラー: ' + e.message;
-                alert('エラー: ' + e.message + '\n※モデル名がAPI側で拒否されている可能性があります。');
+                alert('エラー: ' + e.message);
             }
+        });
+
+        document.getElementById('open-settings-btn').addEventListener('click', () => {
+             const key = prompt("API Keyを入力");
+             const worker = prompt("Worker URLを入力");
+             if(key) localStorage.setItem('api_key', key);
+             if(worker) localStorage.setItem('worker_url', worker);
         });
     </script>
 </body>

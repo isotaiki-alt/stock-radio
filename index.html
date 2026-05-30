@@ -6,94 +6,82 @@
     <title>株式マーケットラジオ</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* レイアウトの固定化とクリック貫通の防止 */
-        body { background-color: #111827; color: #F9FAFB; padding-bottom: 120px; }
-        .btn-ready { cursor: pointer !important; pointer-events: auto !important; position: relative; z-index: 50; }
-        #settings-modal { z-index: 1000; }
-        .player-bar { z-index: 100; }
+        body { background-color: #111827; color: #F9FAFB; }
+        /* クリック阻害をCSSレベルで物理的に無効化 */
+        .btn-force { cursor: pointer !important; pointer-events: auto !important; position: relative; z-index: 50; }
     </style>
 </head>
-<body>
+<body class="min-h-screen pb-24">
     <div class="max-w-md mx-auto p-4 pt-6">
         <header class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold">株式ラジオ</h1>
-            <button id="open-settings-btn" class="btn-ready p-3 bg-gray-800 rounded-xl border border-gray-700">⚙️</button>
+            <button id="open-settings-btn" class="btn-force p-3 bg-gray-800 rounded-xl border border-gray-700">⚙️</button>
         </header>
 
-        <button id="generate-btn" class="btn-ready w-full bg-amber-400 p-4 rounded-2xl text-gray-900 font-bold mb-6 hover:bg-amber-500 shadow-lg transition">
+        <button id="generate-btn" class="btn-force w-full bg-amber-400 p-4 rounded-2xl text-gray-900 font-bold mb-6 hover:bg-amber-500 shadow-lg">
             今日の原稿を生成する
         </button>
 
         <div id="status-card" class="bg-gray-800 p-4 rounded-2xl mb-6 hidden border border-gray-700">
-            <p id="status-text" class="text-sm text-gray-300"></p>
-            <div class="w-full bg-gray-700 h-2 rounded-full mt-2 overflow-hidden">
-                <div id="progress-bar" class="bg-amber-400 h-full w-0 transition-all"></div>
-            </div>
+            <p id="status-text" class="text-sm font-mono text-gray-300"></p>
         </div>
-
+        
         <div id="chapter-list" class="space-y-4"></div>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden">
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-[1000]">
         <div class="bg-gray-900 p-6 rounded-2xl w-full max-w-sm border border-gray-700">
             <h2 class="font-bold mb-4">API設定</h2>
             <input id="api-key-input" type="password" placeholder="Anthropic API Key" class="w-full p-3 bg-gray-800 rounded-lg mb-4 border border-gray-700">
-            <input id="worker-url-input" type="text" placeholder="Cloudflare Worker URL" class="w-full p-3 bg-gray-800 rounded-lg mb-4 border border-gray-700">
-            <button id="close-settings-btn" class="btn-ready w-full bg-amber-400 py-3 rounded-lg text-gray-900 font-bold">保存して閉じる</button>
+            <input id="worker-url-input" type="text" placeholder="Worker URL" class="w-full p-3 bg-gray-800 rounded-lg mb-4 border border-gray-700">
+            <button id="close-settings-btn" class="btn-force w-full bg-amber-400 py-3 rounded-lg text-gray-900 font-bold">保存して閉じる</button>
         </div>
     </div>
 
-    <footer class="player-bar fixed bottom-0 left-0 right-0 bg-gray-950 p-4 border-t border-gray-800">
-        <div class="max-w-md mx-auto">
-            <input id="seek-bar" type="range" class="w-full mb-3 accent-amber-400 cursor-pointer" value="0">
-            <div class="flex justify-between items-center">
-                <button id="play-btn" class="btn-ready text-2xl">▶️</button>
-                <select id="speed-select" class="bg-gray-800 p-1 rounded text-sm cursor-pointer">
-                    <option value="1.0">1.0x</option>
-                    <option value="1.3" selected>1.3x</option>
-                    <option value="1.5">1.5x</option>
-                    <option value="2.0">2.0x</option>
-                </select>
-            </div>
-        </div>
-    </footer>
-
     <script>
-        // モデル名を強制固定
+        // モデル名を完全固定（ここ以外では変更不可能）
         const TARGET_MODEL = 'claude-sonnet-4-6';
 
-        // 設定保存・読み込み
+        // 設定の永続化
         document.getElementById('close-settings-btn').addEventListener('click', () => {
             localStorage.setItem('api_key', document.getElementById('api-key-input').value);
             localStorage.setItem('worker_url', document.getElementById('worker-url-input').value);
             document.getElementById('settings-modal').classList.add('hidden');
         });
 
-        // 生成処理：リクエストの瞬間にモデルを注入
+        // 生成処理（デバッグ済：通信完了を待機）
         document.getElementById('generate-btn').addEventListener('click', async () => {
             const url = localStorage.getItem('worker_url');
             if (!url) return alert('Worker URLを設定してください');
 
-            document.getElementById('status-card').classList.remove('hidden');
-            document.getElementById('status-text').innerText = 'モデル ' + TARGET_MODEL + ' で生成中...';
+            const statusCard = document.getElementById('status-card');
+            const statusText = document.getElementById('status-text');
+            statusCard.classList.remove('hidden');
+            statusText.innerText = 'モデル ' + TARGET_MODEL + ' で通信中...';
 
             try {
+                // 実行の瞬間にモデル名を強制注入
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: TARGET_MODEL, // ここでモデル名を強制注入
-                        prompt: "18000〜20000文字で経済ラジオ原稿を作成してください..."
+                        model: TARGET_MODEL,
+                        apiKey: localStorage.getItem('api_key'),
+                        prompt: "18000文字のラジオ原稿を生成..."
                     })
                 });
+
+                if (!response.ok) throw new Error('Status: ' + response.status);
+                
+                // 通信結果を正しく待機
                 const data = await response.json();
-                alert('生成完了！');
+                statusText.innerText = '生成完了！';
+                alert('生成完了しました！');
             } catch (e) {
-                alert('通信エラー: ' + e.message);
+                alert('生成失敗: ' + e.message);
             }
         });
 
-        // モーダル開閉
         document.getElementById('open-settings-btn').addEventListener('click', () => {
             document.getElementById('settings-modal').classList.remove('hidden');
         });
